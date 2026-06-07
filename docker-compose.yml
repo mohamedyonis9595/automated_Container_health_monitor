@@ -1,0 +1,24 @@
+networks:
+  monitoring_network:
+    driver: bridge
+
+services:
+  # 🏥 THE SELF-HEALING WEB SERVICE
+  monitored_web_app:
+    image: nginx:alpine
+    container_name: monitored_web_app
+    networks:
+      - monitoring_network
+    ports:
+      - "8081:80"
+    # 🔄 AUTO-HEALING POLICY: If the container goes down or fails healthchecks, reboot it automatically!
+    restart: always
+    
+    # 🔍 THE AUTOMATED MONITORING ENGINE
+    healthcheck:
+      # Test the local web server endpoint using curl internally
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 10s    # How often to run the check (Every 10 seconds)
+      timeout: 5s      # How long to wait for a response before counting it as a fail
+      retries: 3       # Number of consecutive failures allowed before flagging "unhealthy"
+      start_period: 5s # Gives Nginx 5 seconds to boot up safely before checking
